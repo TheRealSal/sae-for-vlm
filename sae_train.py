@@ -36,6 +36,16 @@ def get_args_parser():
     parser.add_argument("--threshold_start_step", type=int, default=1000)
     # MatryoshkaBatchTopK
     parser.add_argument("--group_fractions", type=float, nargs="+")
+    # LinearIDOL
+    parser.add_argument("--tau", type=int, default=20)
+    parser.add_argument("--w", type=float, default=0.5)
+    parser.add_argument("--noise_mode", type=str, default="lap")
+    parser.add_argument("--wd", type=float, default=1e-4)
+    parser.add_argument("--l_mse_Zt", type=float, default=0.0)
+    parser.add_argument("--l_ind", type=float, default=0.1)
+    parser.add_argument("--l_spB", type=float, default=0.01)
+    parser.add_argument("--l_spM", type=float, default=0.01)
+    parser.add_argument("--l_spZ", type=float, default=0.01)
 
     return parser
 
@@ -57,7 +67,8 @@ def train_sae(args):
         'standard': StandardTrainer,
         'batch_top_k': BatchTopKTrainer,
         'top_k': TopKTrainer,
-        'matroyshka_batch_top_k': MatroyshkaBatchTopKTrainer,
+        'matroyshka_batch_top_k': MatryoshkaBatchTopKTrainer,
+        'linear_idol': LinearIDOLTrainer,
     }
 
     # autoencoders = {
@@ -95,9 +106,27 @@ def train_sae(args):
         trainer_cfg["threshold_start_step"] = args.threshold_start_step
     if args.sae_model == "matroyshka_batch_top_k":
         trainer_cfg["group_fractions"] = args.group_fractions
+    if args.sae_model == "linear_idol":
+        trainer_cfg["tau"] = args.tau
+        trainer_cfg["w"] = args.w
+        trainer_cfg["noise_mode"] = args.noise_mode
+        trainer_cfg["topk_sparsity"] = args.k
+        trainer_cfg["mode"] = "instantaneous"
+        trainer_cfg["wd"] = args.wd
+        trainer_cfg["warmup_steps"] = args.warmup_steps
+        trainer_cfg["decay_start"] = args.decay_start
+        trainer_cfg["l_mse_Zt"] = args.l_mse_Zt
+        trainer_cfg["l_ind"] = args.l_ind
+        trainer_cfg["l_spB"] = args.l_spB
+        trainer_cfg["l_spM"] = args.l_spM
+        trainer_cfg["l_spZ"] = args.l_spZ
 
     dataset_name = Path(args.activations_dir).name
-    save_dir = Path(args.checkpoints_dir) / f"{dataset_name}_{args.sae_model}_{args.k}_x{args.expansion_factor}"
+    if args.sae_model == "linear_idol":
+        run_suffix = f"tau{args.tau}_k{args.k}"
+    else:
+        run_suffix = str(args.k)
+    save_dir = Path(args.checkpoints_dir) / f"{dataset_name}_{args.sae_model}_{run_suffix}_x{args.expansion_factor}"
     save_dir.mkdir(parents=True, exist_ok=True)
 
     ae = trainSAE(
