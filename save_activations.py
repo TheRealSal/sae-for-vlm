@@ -9,7 +9,7 @@ from torchvision.datasets import ImageFolder
 from utils import get_dataset, get_model
 from torchvision.transforms import ToTensor
 from dictionary_learning import AutoEncoder
-from dictionary_learning.trainers import BatchTopKSAE, MatroyshkaBatchTopKSAE
+from dictionary_learning.trainers import BatchTopKSAE, MatryoshkaBatchTopKSAE
 
 
 def get_args_parser():

@@ -129,12 +129,23 @@ def train_sae(args):
     save_dir = Path(args.checkpoints_dir) / f"{dataset_name}_{args.sae_model}_{run_suffix}_x{args.expansion_factor}"
     save_dir.mkdir(parents=True, exist_ok=True)
 
+
+    print(f"len(dataloader) = {len(dataloader)}")
+    print(f"dataset size = {len(dataset)}")
+    
+    def cycle(loader):
+        while True:
+            for batch in loader:
+                yield batch
+
+    dataloader = cycle(DataLoader(dataset, batch_size=args.batch_size, shuffle=True))
+
     ae = trainSAE(
         data=dataloader,
-        val_data=val_dataloader,
+        #val_data=val_dataloader,
         trainer_configs=[trainer_cfg],
         use_wandb=True,
-        wandb_entity="mateuszpach",
+        wandb_entity="SAE-For-VLMs",
         wandb_project="Clip SAE",
         steps=args.steps,
         save_steps=[x for x in range(0, args.steps, args.save_steps)],
